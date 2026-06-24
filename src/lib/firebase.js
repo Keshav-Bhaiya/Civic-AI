@@ -1,33 +1,40 @@
-import { initializeApp, getApps } from 'firebase/app'
+import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
 const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
 
-// Detect unconfigured placeholder values
 export const firebaseConfigured =
-  !!apiKey &&
+  typeof apiKey === 'string' &&
+  apiKey.length > 10 &&
   apiKey !== 'your_api_key_here' &&
-  !!projectId &&
+  typeof projectId === 'string' &&
+  projectId.length > 3 &&
   projectId !== 'your_project_id'
 
 const firebaseConfig = {
-  apiKey,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-// Only initialize if config is valid; reuse on HMR reloads
-const app = firebaseConfigured
-  ? getApps().length === 0
-    ? initializeApp(firebaseConfig)
-    : getApps()[0]
-  : null
+// Reuse existing app instance on HMR reloads to avoid "already exists" errors
+let app = null
+let auth = null
+let db = null
+let storage = null
 
-export const auth = app ? getAuth(app) : null
-export const db = app ? getFirestore(app) : null
+if (firebaseConfigured) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+  auth = getAuth(app)
+  db = getFirestore(app)
+  storage = getStorage(app)
+}
+
 export const googleProvider = new GoogleAuthProvider()
+export { app, auth, db, storage }
