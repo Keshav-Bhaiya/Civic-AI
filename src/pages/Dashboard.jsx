@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, CheckCircle, ThumbsUp, Award, MapPin, Tag, BarChart2, Shield, Map, Plus, ArrowRight, Bell, CheckSquare } from 'lucide-react'
+import { FileText, CheckCircle, ThumbsUp, Award, MapPin, Tag, BarChart2, Shield, Map, Plus, ArrowRight, Bell } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import BadgeChip from '../components/BadgeChip'
+import { useAuth } from '../context/AuthContext'
 
 const myReports = [
   { id: '1', title: 'Large pothole near Oak Ave & 5th St', location: 'Oak Ave & 5th', category: 'Road', votes: 47, aiScore: 92, date: 'Jun 14', status: 'In Progress' },
@@ -32,6 +33,8 @@ const statCards = [
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const displayName = user?.displayName || user?.profile?.name || 'there'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,13 +44,15 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <img
-              src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=48&h=48&dpr=1"
-              alt="Profile"
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt={displayName} className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">{displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}</span>
+              </div>
+            )}
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Good morning, Alex!</h1>
+              <h1 className="text-xl font-bold text-gray-900">Good morning, {displayName.split(' ')[0]}!</h1>
               <p className="text-sm text-gray-500">You have 3 active reports and 2 pending verifications.</p>
             </div>
           </div>

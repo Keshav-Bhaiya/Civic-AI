@@ -1,5 +1,7 @@
+import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Flag } from 'lucide-react'
+import { Flag, LogOut, User, ChevronDown } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const navLinks = [
   { label: 'Dashboard', to: '/dashboard' },
@@ -13,6 +15,29 @@ const navLinks = [
 export default function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  async function handleLogout() {
+    setMenuOpen(false)
+    await logout()
+    navigate('/login')
+  }
+
+  const displayName = user?.displayName || user?.profile?.name || 'User'
+  const photoURL = user?.photoURL || null
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -55,13 +80,49 @@ export default function Navbar() {
               <Flag size={14} />
               Report Issue
             </button>
-            <Link to="/dashboard">
-              <img
-                src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=40&h=40&dpr=1"
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-              />
-            </Link>
+
+            {/* Avatar + dropdown */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(prev => !prev)}
+                className="flex items-center gap-1.5 focus:outline-none"
+              >
+                {photoURL ? (
+                  <img
+                    src={photoURL}
+                    alt={displayName}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center border-2 border-gray-200">
+                    <span className="text-white text-xs font-bold">{initials}</span>
+                  </div>
+                )}
+                <ChevronDown size={13} className={`text-gray-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <User size={14} className="text-gray-400" /> My Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={14} /> Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
