@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, User, Eye, EyeOff, Shield, Cpu, Users, AlertTriangle } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, Shield, Cpu, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Signup() {
@@ -12,7 +12,7 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const { signUpWithEmail, signInWithGoogle, firebaseConfigured } = useAuth()
+  const { signUpWithEmail, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
@@ -103,15 +103,6 @@ export default function Signup() {
 
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Join CivicAI</h1>
           <p className="text-gray-500 text-sm mb-7">Start making your community better today.</p>
-
-          {!firebaseConfigured && (
-            <div className="mb-5 bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm px-4 py-3 rounded-xl flex gap-2">
-              <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
-              <span>
-                Firebase is not configured. Add your credentials to <code className="font-mono bg-yellow-100 px-1 rounded">.env</code> to enable authentication.
-              </span>
-            </div>
-          )}
 
           {error && (
             <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">

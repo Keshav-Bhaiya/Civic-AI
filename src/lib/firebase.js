@@ -3,17 +3,6 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
-const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
-const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
-
-export const firebaseConfigured =
-  typeof apiKey === 'string' &&
-  apiKey.length > 10 &&
-  apiKey !== 'your_api_key_here' &&
-  typeof projectId === 'string' &&
-  projectId.length > 3 &&
-  projectId !== 'your_project_id'
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -24,17 +13,9 @@ const firebaseConfig = {
 }
 
 // Reuse existing app instance on HMR reloads to avoid "already exists" errors
-let app = null
-let auth = null
-let db = null
-let storage = null
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 
-if (firebaseConfigured) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
-  auth = getAuth(app)
-  db = getFirestore(app)
-  storage = getStorage(app)
-}
-
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const storage = getStorage(app)
 export const googleProvider = new GoogleAuthProvider()
-export { app, auth, db, storage }

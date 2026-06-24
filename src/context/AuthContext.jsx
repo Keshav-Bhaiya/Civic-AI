@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
-import { auth, db, googleProvider, firebaseConfigured } from '../lib/firebase'
+import { auth, db, googleProvider } from '../lib/firebase'
 
 const AuthContext = createContext(null)
 
@@ -17,11 +17,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!firebaseConfigured || !auth) {
-      setLoading(false)
-      return
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -40,7 +35,6 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function createUserDocument(firebaseUser, extraData = {}) {
-    if (!db) return
     const ref = doc(db, 'users', firebaseUser.uid)
     const snap = await getDoc(ref)
     if (!snap.exists()) {
@@ -59,34 +53,30 @@ export function AuthProvider({ children }) {
   }
 
   async function signUpWithEmail(email, password, name) {
-    if (!auth) throw new Error('Firebase is not configured. Add credentials to .env')
     const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(firebaseUser, { displayName: name })
     await createUserDocument(firebaseUser, { name })
-    const snap = db ? await getDoc(doc(db, 'users', firebaseUser.uid)) : null
-    setUser({ ...firebaseUser, displayName: name, profile: snap?.data() ?? null })
+    const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
+    setUser({ ...firebaseUser, displayName: name, profile: snap.data() })
     return firebaseUser
   }
 
   async function signInWithEmail(email, password) {
-    if (!auth) throw new Error('Firebase is not configured. Add credentials to .env')
     const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password)
-    const snap = db ? await getDoc(doc(db, 'users', firebaseUser.uid)) : null
-    setUser({ ...firebaseUser, profile: snap?.exists() ? snap.data() : null })
+    const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
+    setUser({ ...firebaseUser, profile: snap.exists() ? snap.data() : null })
     return firebaseUser
   }
 
   async function signInWithGoogle() {
-    if (!auth) throw new Error('Firebase is not configured. Add credentials to .env')
     const { user: firebaseUser } = await signInWithPopup(auth, googleProvider)
     await createUserDocument(firebaseUser)
-    const snap = db ? await getDoc(doc(db, 'users', firebaseUser.uid)) : null
-    setUser({ ...firebaseUser, profile: snap?.exists() ? snap.data() : null })
+    const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
+    setUser({ ...firebaseUser, profile: snap.exists() ? snap.data() : null })
     return firebaseUser
   }
 
   async function logout() {
-    if (!auth) return
     await signOut(auth)
     setUser(null)
   }
@@ -94,7 +84,6 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
-    firebaseConfigured,
     signUpWithEmail,
     signInWithEmail,
     signInWithGoogle,
